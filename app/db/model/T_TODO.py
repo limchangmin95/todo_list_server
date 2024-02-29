@@ -8,6 +8,7 @@ class T_TODO(Base):
     __tablename__ = 'T_TODO'
 
     td_seq = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    td_category_seq = Column(Integer, nullable=False)
     td_main_seq = Column(Integer)
     td_title = Column(String(100), nullable=False)
     td_detail = Column(String(1000))
