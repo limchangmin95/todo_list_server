@@ -18,7 +18,6 @@ class ComboList(BaseModel):
         orm_mode = True  
 class SearchTodoParam(BaseModel):
     id: str
-    td_category_seq: int
     class Config:
         orm_mode = True
 
@@ -32,7 +31,7 @@ class TodoInfo(BaseModel):
     create_dt: str
 
     @validator("create_dt", pre=True)
-    def parse_create_dt(cls, v: date):
+    def parse_todo_create_dt(cls, v: date):
         if v:
             return v.strftime("%Y-%m-%d")
         else:
@@ -46,7 +45,7 @@ class CategoryInfo(BaseModel):
     create_dt: str
 
     @validator("create_dt", pre=True)
-    def parse_create_dt(cls, v: date):
+    def parse_category_create_dt(cls, v: date):
         if v:
             return v.strftime("%Y-%m-%d")
         else:
@@ -55,13 +54,37 @@ class CategoryInfo(BaseModel):
     class Config:
         orm_mode = True
 
+class TodoData(BaseModel):
+    data: list[TodoInfo] = []
+
+    class Config:
+        orm_mode = True
+class CategoryData(BaseModel):
+    data: list[CategoryInfo] = []
+
+    class Config:
+        orm_mode = True
+        
 class TodoList(BaseModel):
-    todo_list: list[TodoInfo] = []
-    category_list: list[CategoryInfo] = []
+    # todo_list: list[TodoInfo] = []
+    # category_list: list[CategoryInfo] = []
+    todo_list: TodoData = None
+    category_list: CategoryData = None
 
     class Config:
         orm_mode = True
 
+class TodoCategoryParam(BaseModel):
+    id: str
+    td_category_nm: str
+    class Config:
+        orm_mode = True
+
+class TodoCategoryCreate(BaseModel):
+    td_category_nm: str
+    td_user_id: str
+    class Config:
+        orm_mode = True
 class TodoRegisterParam(BaseModel):
     id: str
     wish_img_path : str

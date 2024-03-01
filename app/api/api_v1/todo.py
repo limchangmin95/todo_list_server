@@ -21,63 +21,68 @@ async def search_todo_list(
 ):
     logger.debug("search_todo_list START!!!")
     logger.debug(search_form)
+    
+    category_data = None
+    todo_data = None
 
-    category_sql = mysqlDb.query(
-        TD_CA.td_category_seq,
-        TD_CA.td_category_nm,
-        TD_CA.sys_create_dt.label('create_dt'),
-    )
-
-    category_sql = category_sql.filter(TD_CA.td_user_id == search_form.td_category_seq)
-
-    category_sql = category_sql.order_by(TD_CA.sys_update_dt.desc())
+    category_sql = await get_category_list(db=mysqlDb)
 
     category_list = category_sql.all()
 
-    todo_sql = await get_todo_list(db=mysqlDb)
+    category_data = todo.CategoryData(
+        data=category_list
+    )
 
-    todo_sql = todo_sql.filter(TD.sys_create_id == search_form.id)
+    todo_list = []
 
-    todo_sql = todo_sql.filter(TD.td_category_seq == search_form.td_category_seq)
+    if len(category_list) != 0:
+        td_category = category_list[0]
+        
+        logger.debug('td_category START!!!!')
+        logger.debug(td_category.td_category_seq)
 
-    todo_sql = todo_sql.order_by(TD.sys_create_dt.desc())
+        todo_sql = await get_todo_list(db=mysqlDb)
 
-    todo_list = todo_sql.all()
+        todo_sql = todo_sql.filter(TD.sys_create_id == search_form.id)
 
-    return todo.TodoList(todo_list=todo_list, category_list=category_list)
+        todo_sql = todo_sql.filter(TD.td_category_seq == td_category.td_category_seq)
+
+        todo_sql = todo_sql.order_by(TD.sys_create_dt.desc())
+
+        todo_list = todo_sql.all()
+
+        todo_data = todo.TodoData(
+            data=todo_list
+        )
+
+    return todo.TodoList(category_list=category_data, todo_list=todo_data)
 
 
-# @router.post("/register")
-# async def register_wish(
-#     form_param: todo.WishRegisterParam,
-#     mysqlDb: Session = Depends(deps.get_mysqlDb)
-# ):
-#     logging.debug("register_wish START!!!")
-#     logging.debug(form_param)
+@router.post("/category/register")
+async def register_category(
+    form_param: todo.TodoCategoryParam,
+    mysqlDb: Session = Depends(deps.get_mysqlDb)
+):
+    logging.debug("register_category START!!!")
+    logging.debug(form_param)
 
-#     obj_in = todo.WishRegisterCreate(
-#         acc_seq=1,
-#         wish_addr=form_param.wish_addr,
-#         wish_addr_full=form_param.wish_addr_full,
-#         wish_addr_sub=form_param.wish_addr_sub,
-#         wish_img_path=form_param.wish_img_path,
-#         wish_nm=form_param.wish_nm,
-#         wish_rating=form_param.wish_rating,
-#         wish_latitude=form_param.wish_latitude,
-#         wish_longitude=form_param.wish_longitude,
-#         wish_type=form_param.wish_type,
-#         wish_sub_type=form_param.wish_sub_type,
-#     )
+    obj_in = todo.TodoCategoryCreate(
+       td_category_nm=form_param.td_category_nm, 
+       td_user_id=form_param.id
+    )
     
-#     CRUDBase.create(self=CRUDBase(TD), db=mysqlDb, obj_in=obj_in, login_id=form_param.id)
+    CRUDBase.create(self=CRUDBase(TD_CA), db=mysqlDb, obj_in=obj_in, login_id=form_param.id)
 
-#     sql = await get_wish_list(db=mysqlDb)
+    sql = await get_category_list(db=mysqlDb)
 
-#     sql = sql.filter(TD.sys_create_id == form_param.id)
+    sql = sql.filter(TD_CA.sys_create_id == form_param.id)
 
-#     wish_list = sql.all()
+    category_list = sql.all()
 
-#     return todo.WishList(data=wish_list)
+    logger.debug('register_category END')
+    logger.debug(category_list)
+
+    return todo.CategoryData(data=category_list)
 
 
 # @router.put("/update/{wish_seq}")
@@ -144,5 +149,21 @@ async def get_todo_list(
         TD.td_main_seq,
         TD.sys_create_dt.label("create_dt"),
     )
+
+    return sql
+
+
+async def get_category_list(
+        db: Session,
+):
+    logger.debug('get_category_list START!!!!!')
+
+    sql = db.query(
+        TD_CA.td_category_seq,
+        TD_CA.td_category_nm,
+        TD_CA.sys_create_dt.label('create_dt'),
+    )
+
+    sql = sql.order_by(TD_CA.sys_create_dt.asc())
 
     return sql
